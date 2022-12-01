@@ -45,28 +45,34 @@ def perform_eda(df):
     output:
             None
     """
+
+    # Helper function to save images in specified path
+    def save_img(pth):
+        plt.savefig(pth, bbox_inches='tight')
+        plt.clf()
+
     # Save dataframe description as image
     dfi.export(
         df.describe(),
-        "./images/dataset_description.png",
+        "./images/eda/dataset_description.png",
         table_conversion="matplotlib")
     # Plot a histogram of churned vs existing costumers
     df['Attrition_Flag'].hist()
-    plt.savefig("./images/churn_dist")
+    save_img("./images/eda/churn_dist")
     # Plot a histogram of customers age
-    df['Customer'].hist()
-    plt.savefig("./images/customers_age")
+    df['Customer_Age'].hist()
+    save_img("./images/eda/customers_age")
     # Draw a normalized bar plot of customers martial status
     df.Marital_Status.value_counts('normalize').plot(kind="bar")
-    plt.savefig("./images/martial_status_percentage")
+    save_img("./images/eda/martial_status_percentage")
     # distplot is deprecated. Use histplot instead
     # sns.distplot(df['Total_Trans_Ct']);
-    # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a           kernel density estimate
+    # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
     sns.histplot(df['Total_Trans_Ct'], stat='density', kde=True)
-    plt.savefig("./images/total_trans_ct")
+    save_img("./images/eda/total_trans_ct")
     # Draw a correlotion heat map
     sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
-    plt.savefig("./images/features_correlations")
+    save_img("./images/eda/features_correlations")
 
 
 def encoder_helper(df, category_lst, response):
@@ -151,19 +157,40 @@ def classification_report_image(y_train,
 
 def feature_importance_plot(model, X_data, output_pth):
     """
-    creates and stores the feature importances in pth
+    creates and stores the feature importance in pth
     input:
-            model: model object containing feature_importances_
+            model: model object containing feature_importance_
             X_data: pandas dataframe of X values
             output_pth: path to store the figure
 
     output:
              None
     """
-    pass
+    # Calculate feature importances
+    importances = model.feature_importances_
+    # Sort feature importances in descending order
+    indices = np.argsort(importances)[::-1]
+
+    # Rearrange feature names so they match the sorted feature importances
+    names = [X_data.columns[i] for i in indices]
+
+    # Create plot
+    plt.figure(figsize=(20, 5))
+
+    # Create plot title
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+
+    # Add bars
+    plt.bar(range(X_data.shape[1]), importances[indices])
+
+    # Add feature names as x-axis labels
+    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+
+    plt.savefig()
 
 
-def train_models(X_train, X_test, y_train, y_test):
+def train_models(X, X_train, X_test, y_train, y_test):
     """
     train, store model results: images + scores, and store models
     input:
@@ -201,6 +228,8 @@ def train_models(X_train, X_test, y_train, y_test):
     plot_model_results(y_test, y_test_preds_rf, y_train, y_train_preds_rf, 'Random Forest')
     plot_model_results(y_test, y_test_preds_lr, y_train, y_train_preds_lr, 'Logistic Regression')
 
+    feature_importance_plot(cv_rfc.best_estimator_, X, "")
+
 
 def plot_model_results(test_data, model_test_predictions, train_data, model_train_predictions, model_name):
     plt.rc('figure', figsize=(5, 5))
@@ -215,6 +244,9 @@ def plot_model_results(test_data, model_test_predictions, train_data, model_trai
     plt.savefig()
 
 
-
 if __name__ == "__main__":
-    pass
+    df = import_data("data/bank_data.csv")
+    dfi.export(
+        df.describe(),
+        "./images/eda/dataset_description.png",
+        table_conversion="matplotlib")
